@@ -13,8 +13,8 @@ public class PurchaseApiTest {
     public static void main(String[] args) {
 
         PurchaseApi apiInstance = new PurchaseApi();
-        apiInstance.getApiClient().setBasePath("http://localhost:8080/HW_1_war_exploded/");
-        // apiInstance.getApiClient().setBasePath("http://100.24.240.191:8080/HW_1_war/");
+        // apiInstance.getApiClient().setBasePath("http://localhost:8080/HW_1_war_exploded/");
+        apiInstance.getApiClient().setBasePath("http://35.175.64.87:8080/HW_1_war/");
         System.out.println(apiInstance.getApiClient().getBasePath());
 
         int maxStores=1, maxCustID, maxItemID, numPurchases, numItemPerPurchase, date;
@@ -127,6 +127,10 @@ public class PurchaseApiTest {
 
         reqCount = new ReqCount(maxStores,opHours);
 
+//        MyBlockingQueue blockingQueue = new MyBlockingQueue(maxStores, opHours, numPurchases);
+//        Thread consumerThread = new Thread(blockingQueue.consumer);
+//        consumerThread.start();
+
         long startTime = System.currentTimeMillis();
 
         while (true){
@@ -179,6 +183,11 @@ public class PurchaseApiTest {
         double timePeriod = ((endTime-startTime)/1000.0);
         double throughput = (totalSucReq + totalFailReq)/ timePeriod;
 
+//        try{
+//            consumerThread.join();
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
 
         System.out.println("Number of Stores/threads:" + maxStores);
         System.out.println("All threads finished");
@@ -187,7 +196,7 @@ public class PurchaseApiTest {
         System.out.println("Time Period:" + timePeriod);
         System.out.println("Throughput:" + throughput);
 
-
+        System.out.println("Program finished.");
 
 //        PurchaseItems testItem1 = new PurchaseItems();
 //        testItem1.setItemID("10001");

@@ -4,6 +4,7 @@ import io.swagger.client.api.PurchaseApi;
 import org.apache.log4j.Logger;
 
 import java.util.*;
+import java.util.concurrent.BlockingQueue;
 
 public class SingleRquest implements Runnable{
     private int storeID, custID, numberOfItem, maxItemID;
@@ -14,6 +15,7 @@ public class SingleRquest implements Runnable{
     Random rand = new Random();
     ReqCount reqCount;
     int hour;
+    // BlockingQueue<String[]> queue;
 
     public SingleRquest(int hour,int store, int cust, String date, int maxItem, int numItem, PurchaseApi apiInstance, ReqCount reqCount){
         this.hour = hour;
@@ -24,6 +26,7 @@ public class SingleRquest implements Runnable{
         purchaseDate = date;
         this.apiInstance = apiInstance;
         this.reqCount = reqCount;
+        // this.queue = queue;
     }
 
     @Override
@@ -50,6 +53,7 @@ public class SingleRquest implements Runnable{
             }
             long reqEndTime = System.currentTimeMillis();
             String[] tempData = {String.valueOf(reqStartTime),"POST", String.valueOf(reqEndTime-reqStartTime),String.valueOf(statusCode)};
+//            queue.put(tempData);
         } catch (ApiException e) {
             System.err.println("Exception when calling PurchaseApi#newPurchase");
             e.printStackTrace();

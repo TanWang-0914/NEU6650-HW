@@ -5,6 +5,7 @@ import io.swagger.client.api.PurchaseApi;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.BlockingQueue;
 
 public class RequestsPerStore implements Runnable{
     private int storeID, maxCustID, maxItemID, numPurchases, numItemPerPurchase;
@@ -17,6 +18,7 @@ public class RequestsPerStore implements Runnable{
     int[] successfulReq;
     int[] failedReq;
     int opHour;
+    // BlockingQueue<String[]> queue;
 
     public RequestsPerStore(int storeID, int maxCustID, int maxItemID, int numPurchases, int numItemPerPurchase,String date, int opHour,PurchaseApi apiInstance, Phase phase,ReqCount reqCount){
         this.storeID = storeID;
@@ -31,6 +33,7 @@ public class RequestsPerStore implements Runnable{
         successfulReq = new int[12];
         failedReq = new int[12];
         this.reqCount = reqCount;
+        // this.queue = queue;
     }
 
     @Override
