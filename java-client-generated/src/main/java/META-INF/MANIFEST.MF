@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Main-Class: PurchaseApiTest
+Class-Path: swagger-annotations-2.0.0.jar log4j-1.2.17.jar okio-1.6.0.ja
+ r javax.annotation.jar javax.jms.jar javax.persistence.jar javax.ejb.ja
+ r javax.servlet.jar javax.resource.jar javax.transaction.jar javax.serv
+ let.jsp.jar javax.servlet.jsp.jstl.jar javax.annotation-api-1.3.2.jar l
+ ogging-interceptor-2.7.5.jar gson-2.8.1.jar gson-fire-1.8.3.jar threete
+ nbp-1.3.5.jar okhttp-2.7.5.jar
+

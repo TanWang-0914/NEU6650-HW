@@ -1,0 +1,20 @@
+<component name="ArtifactManager">
+  <artifact name="swagger-java-client-manifest">
+    <output-path>$PROJECT_DIR$/out/artifacts/swagger_java_client_manifest</output-path>
+    <root id="root">
+      <element id="archive" name="swagger-java-client.jar">
+        <element id="module-output" name="swagger-java-client" />
+      </element>
+      <element id="library" level="project" name="Maven: io.swagger.core.v3:swagger-annotations:2.0.0" />
+      <element id="library" level="project" name="Maven: log4j:log4j:1.2.17" />
+      <element id="library" level="project" name="Maven: com.squareup.okio:okio:1.6.0" />
+      <element id="library" level="project" name="Java EE 6-Java EE 6" />
+      <element id="library" level="project" name="Maven: javax.annotation:javax.annotation-api:1.3.2" />
+      <element id="library" level="project" name="Maven: com.squareup.okhttp:logging-interceptor:2.7.5" />
+      <element id="library" level="project" name="Maven: com.google.code.gson:gson:2.8.1" />
+      <element id="library" level="project" name="Maven: io.gsonfire:gson-fire:1.8.3" />
+      <element id="library" level="project" name="Maven: org.threeten:threetenbp:1.3.5" />
+      <element id="library" level="project" name="Maven: com.squareup.okhttp:okhttp:2.7.5" />
+    </root>
+  </artifact>
+</component>
