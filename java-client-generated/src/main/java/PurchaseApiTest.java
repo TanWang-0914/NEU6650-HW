@@ -14,7 +14,7 @@ public class PurchaseApiTest {
 
         PurchaseApi apiInstance = new PurchaseApi();
         // apiInstance.getApiClient().setBasePath("http://localhost:8080/HW_1_war_exploded/");
-        apiInstance.getApiClient().setBasePath("http://35.175.64.87:8080/HW_1_war/");
+        apiInstance.getApiClient().setBasePath("http://52.91.146.150:8080/HW_1_war/");
         System.out.println(apiInstance.getApiClient().getBasePath());
 
         int maxStores=1, maxCustID, maxItemID, numPurchases, numItemPerPurchase, date;
