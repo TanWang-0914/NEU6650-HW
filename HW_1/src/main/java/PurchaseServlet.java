@@ -9,6 +9,18 @@ import java.util.List;
 
 @WebServlet(name = "PurchaseServlet", value = "/PurchaseServlet")
 public class PurchaseServlet extends HttpServlet {
+
+    PurchaseDao purchaseDao;
+
+    public void init(){
+        try{
+            purchaseDao = new PurchaseDao();
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("PurchaseDao creation failed!!");
+        }
+    }
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         // Set the response message's MIME type
@@ -153,6 +165,8 @@ public class PurchaseServlet extends HttpServlet {
             String storeID = urlParts[1].trim();
             String custID = urlParts[3].trim();
             String date = urlParts[5];
+
+            purchaseDao.createPurchase(new Purchase(10, 3, 3, 5, 500, 20));
 
             // Allocate a output writer to write the response message into the network socket
             PrintWriter out = response.getWriter();
