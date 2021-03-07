@@ -10,7 +10,7 @@
     </servlet>
 
     <servlet>
-        <servlet-name>EchoServletExample</servlet-name>
+        <servlet-name>EchoServlet</servlet-name>
         <servlet-class>EchoServlet</servlet-class>
     </servlet>
 
@@ -25,8 +25,8 @@
     </servlet-mapping>
 
     <servlet-mapping>
-        <servlet-name>EchoServletExample</servlet-name>
-        <url-pattern>/echo</url-pattern>
+        <servlet-name>EchoServlet</servlet-name>
+        <url-pattern>/prime</url-pattern>
     </servlet-mapping>
 
     <servlet-mapping>

@@ -49,7 +49,6 @@ public class SingleRquest implements Runnable{
 
             if (statusCode > 201){
                 logger.info("StatusCode-" + statusCode + ": " + "/purchase/"+storeID+"/customer/"+custID+"/date/"+purchaseDate);
-                reqCount.incFail();
             }
             long reqEndTime = System.currentTimeMillis();
             String[] tempData = {String.valueOf(reqStartTime),"POST", String.valueOf(reqEndTime-reqStartTime),String.valueOf(statusCode)};
