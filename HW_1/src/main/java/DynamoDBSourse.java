@@ -26,9 +26,9 @@ public class DynamoDBSourse {
 //                "FwoGZXIvYXdzEH4aDJ6+x1N+3iFFXtPdACLIATDycv8V2WeXBesnrSiwCkX7jqt08/32TadxqwYI4me2FSuPcgQXcjN1clVTzYS2flIBjc+YQ1dK0CWsqDrZbtnA2ZWGzQCgwZbY5fbh1hP/24uEBNp2l4EFL199siKkL9OwTmcbd4pVefKyS+YTAPXc8uGSYzCZXErEgvqymjyqjrUMO6uyaeDT/aSgbQ16wrsjp4OXDtPpuvVkXcEfO4pNUibCQ+42QMPS0QLVNhijWfE7mVuBdGCrc+l9uyF9GsRooAp4HB+kKKLe8YEGMi2lMYG20kOxXElMW6M5ruM4xKfgFYxFREf/lTG+T1aurSmBH7AVjDvwelrd6mY="
 //        );
         BasicSessionCredentials sessionCredentials = new BasicSessionCredentials(
-                System.getProperty(awsAccessKey),
-                System.getProperty(awsSecretKey),
-                System.getProperty(awsSessionToken)
+                awsAccessKey,
+                awsSecretKey,
+                awsSessionToken
         );
 
         client = AmazonDynamoDBClientBuilder.standard()
