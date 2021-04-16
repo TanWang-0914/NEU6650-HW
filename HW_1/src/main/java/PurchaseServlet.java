@@ -1,7 +1,11 @@
-import com.rabbitmq.client.Channel;
+
 import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPool;
-import com.rabbitmq.client.MessageProperties;
+
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.json.JSONObject;
 
 import javax.servlet.*;
@@ -19,13 +23,19 @@ import java.util.concurrent.TimeoutException;
 public class PurchaseServlet extends HttpServlet {
 
 //    static PurchaseDao purchaseDao;
-    Random rand = new Random();
-    private ObjectPool rabbitChannelPool;
-    private static final String EXCHANGE_NAME = "purchaseLogs";
+//    Random rand = new Random();
+    private ObjectPool kafkaProducerPool;
+    private static final String purchases_topic = "purchases_topic";
+    private static final String bootstrapServers = "3.235.146.135:9092";
+    private static Properties properties;
     private RPCClient getRpc;
 
     public void init() {
-        rabbitChannelPool = new GenericObjectPool<Channel>(new RabbitMQChannelFactory());
+        kafkaProducerPool = new GenericObjectPool<KafkaProducer<String, String>>(new KafkaProducerFactory());
+//        properties = new Properties();
+//        properties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+//        properties.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+//        properties.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         try {
             getRpc = new RPCClient();
         } catch (TimeoutException e) {
@@ -70,8 +80,7 @@ public class PurchaseServlet extends HttpServlet {
                     String jsonResponseMessage = getRpc.call(jsonMessage);
 
                     out.println(jsonResponseMessage);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+
                 } finally {
                     out.close();
                 }
@@ -202,11 +211,12 @@ public class PurchaseServlet extends HttpServlet {
 
             // Allocate a output writer to write the response message into the network socket
             PrintWriter out = response.getWriter();
-            Channel channel = null;
+            KafkaProducer<String, String> producer = null;
+            // KafkaProducer<String, String> producer = new KafkaProducer<String, String>(properties);
             try {
 
-                channel = (Channel) rabbitChannelPool.borrowObject();
-                channel.exchangeDeclare(EXCHANGE_NAME, "fanout");
+                producer = (KafkaProducer<String, String>) kafkaProducerPool.borrowObject();
+
                 String jsonMessage = new JSONObject()
                         .put("purchaseID", UUID.randomUUID().toString())
                         .put("storeID", storeID)
@@ -215,9 +225,13 @@ public class PurchaseServlet extends HttpServlet {
                         .put("purchaseBody", data)
                         .toString();
 
+                ProducerRecord<String, String> record = new ProducerRecord<String,String>(purchases_topic, jsonMessage);
                 // channel.basicPublish(EXCHANGE_NAME, "", null, jsonMessage.getBytes(StandardCharsets.UTF_8));
-                channel.basicPublish(EXCHANGE_NAME, "", MessageProperties.PERSISTENT_TEXT_PLAIN, jsonMessage.getBytes(StandardCharsets.UTF_8));
+                // channel.basicPublish(EXCHANGE_NAME, "", MessageProperties.PERSISTENT_TEXT_PLAIN, jsonMessage.getBytes(StandardCharsets.UTF_8));
 
+                producer.send(record);
+                producer.flush();
+//                producer.close();
 //                purchaseDao.createPurchase(UUID.randomUUID().toString(), storeID, custID, date, data);
                 // write to database success, change status code 201
                 response.setStatus(HttpServletResponse.SC_CREATED);
@@ -240,7 +254,7 @@ public class PurchaseServlet extends HttpServlet {
             } finally {
                 out.close();  // Always close the output writer
                 try {
-                    rabbitChannelPool.returnObject(channel);
+                    kafkaProducerPool.returnObject(producer);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

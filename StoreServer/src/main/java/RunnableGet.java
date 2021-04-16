@@ -1,108 +1,103 @@
-import com.rabbitmq.client.AMQP;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.DeliverCallback;
-import org.json.JSONArray;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.errors.WakeupException;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.json.JSONObject;
-
-import java.io.IOException;
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
 
 public class RunnableGet implements Runnable{
 
-    private static final String RPC_QUEUE_NAME = "rpc_queue";
-    private String QUEUE_NAME;
+    private static final String rpc_requests_topic = "rpc_requests";
+    private static final String rpc_responses_topic = "rpc_responses";
+    private static final String groupId = "rpc_group";
+    private static final String bootstrapServers = "3.235.146.135:9092";
+    private static Properties properties_con;
+    private static Properties properties_pro;
     StoreRecords storeRecords;
-    Connection connection;
+    private KafkaConsumer<String, String> consumer;
+    private KafkaProducer<String, String> producer;
+    private CountDownLatch latch;
 
-    public RunnableGet(StoreRecords storeRecords, Connection connection, String queueName){
+    public RunnableGet(StoreRecords storeRecords, CountDownLatch latch){
         this.storeRecords = storeRecords;
-        this.connection = connection;
-        QUEUE_NAME = queueName;
+
+        properties_con = new Properties();
+        properties_con.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        properties_con.setProperty(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        properties_con.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        properties_con.setProperty(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+        // properties_con.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
+
+        // create consumer
+        consumer = new KafkaConsumer<String, String>(properties_con);
+        // subscribe consumer to our topic(s)
+        consumer.subscribe(Arrays.asList(rpc_requests_topic));
+
+        properties_pro = new Properties();
+
+        properties_pro.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        properties_pro.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        properties_pro.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+
+        producer = new KafkaProducer<String, String>(properties_pro);
+
+        this.latch = latch;
     }
 
     @Override
     public void run() {
-        try{
-            final Channel channelForGet = connection.createChannel();
-            channelForGet.queueDeclare(RPC_QUEUE_NAME, false, false, false, null);
-            channelForGet.queuePurge(RPC_QUEUE_NAME);
+        try {
+            String response = null;
+            while (true) {
+                ConsumerRecords<String, String> records =
+                        consumer.poll(Duration.ofMillis(100)); // new in Kafka 2.0.0
 
-            System.out.println(" [*] Waiting for messages. To exit press CTRL+C");
-
-            Object monitor = new Object();
-
-            DeliverCallback deliverCallbackOnGet = (consumerTag, delivery) -> {
-                AMQP.BasicProperties replyProps = new AMQP.BasicProperties
-                        .Builder()
-                        .correlationId(delivery.getProperties().getCorrelationId())
-                        .build();
-
-                String response = "";
-
-                try {
-                    String requestMessage = new String(delivery.getBody(), "UTF-8");
+                for (ConsumerRecord<String, String> record : records) {
+                    String requestMessage = record.value();
                     JSONObject requestObj = new JSONObject(requestMessage);
                     String op = requestObj.getString("op");
                     int param = Integer.parseInt(requestObj.getString("param"));
 
-                    if (op.equals("store")){
+                    if (op.equals("store")) {
                         response = storeRecords.getStoreTop10Items(param);
-                    }else if (op.equals("top10")){
+                    } else if (op.equals("top10")) {
                         response = storeRecords.getItemTop5Store(param);
                     }
 
-                } catch (RuntimeException e) {
-                    System.out.println(" [.] " + e.toString());
-                } finally {
-                    channelForGet.basicPublish("", delivery.getProperties().getReplyTo(), replyProps, response.getBytes("UTF-8"));
-                    channelForGet.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
-                    // RabbitMq consumer worker thread notifies the RPC server owner thread
-                    synchronized (monitor) {
-                        monitor.notify();
-                    }
-                }
-            };
+                    // create a producer record
+                    ProducerRecord<String, String> response_record =
+                            new ProducerRecord<String, String>(rpc_responses_topic, response);
 
+                    // send data - asynchronous
+                    producer.send(response_record);
 
-            channelForGet.basicConsume(RPC_QUEUE_NAME, false, deliverCallbackOnGet, (consumerTag -> { }));
-
-            // Wait and be prepared to consume the message from RPC client.
-            while (true) {
-                synchronized (monitor) {
-                    try {
-                        monitor.wait();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+                    // flush data
+                    producer.flush();
                 }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        } catch (WakeupException e) {
+            System.out.println("Received shutdown signal");
+        } finally {
+            consumer.close();
+            producer.close();
+            latch.countDown();
 
+        }
     }
 
-    public void update(String purchaseMessage){
-
-        JSONObject purchase = new JSONObject(purchaseMessage);
-
-        int storeID = Integer.parseInt(purchase.getString("storeID"));
-
-        String purchaseBody = purchase.getString("purchaseBody");
-
-        JSONObject purchaseBodyJson = new JSONObject(purchaseBody);
-        JSONArray purchaseItems = purchaseBodyJson.getJSONArray("items");
-        for (int i = 0; i < purchaseItems.length(); i++){
-            JSONObject item = purchaseItems.getJSONObject(i);
-            int itemID = Integer.parseInt(item.getString("ItemID"));
-            int number = item.getInt("numberOfItems:");
-            storeRecords.storeArrays[storeID].getAndAdd(itemID,number);
-//            storeRecords.increase(storeID, itemID, number);
-//             System.out.println("update success");
-//             System.out.println("Increase store " + storeID + " item " + itemID + " by " + number);
-        }
-
-         System.out.println(" [x] Received '" + purchaseBody + "'");
-
+    public void shutdown() {
+        // the wakeup() method is a special method to interrupt consumer.poll()
+        // it will throw the exception WakeUpException
+        consumer.wakeup();
     }
 }
+

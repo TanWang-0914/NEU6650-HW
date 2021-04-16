@@ -9,8 +9,8 @@ public class StoreRecords {
     public AtomicIntegerArray[] storeArrays;
 
     public StoreRecords(){
-        storeArrays = new AtomicIntegerArray[512];
-        for (int i = 0; i < 512; i++){
+        storeArrays = new AtomicIntegerArray[1024];
+        for (int i = 0; i < 1024; i++){
             storeArrays[i] = new AtomicIntegerArray(100000);
         }
         System.out.println("StoreRecords constructor finished");
